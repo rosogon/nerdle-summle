@@ -24,29 +24,22 @@ operators = {
     "/": lambda a, b: ((0 if b == 0 else a // b), (b != 0 and (a % b == 0))),
 }
 
+identity = {
+    "+": lambda a, b: a == 0 or b == 0,
+    "-": lambda a, b: b == 0,
+    "*": lambda a, b: a == 1 or b == 1,
+    "/": lambda a, b: b == 1,
+}
+
 
 class Operation(NamedTuple):
     a: int
     op: str
     b: int
 
-    #def _order(self):
-    #    if not commutative[self.op] or self.a < self.b:
-    #        return (self.a, self.b)
-    #    return (self.b, self.a) 
-    #
-    #def __eq__(self, other):
-    #    if self.op != other.op:
-    #        return False
-    #    return self._order() == other._order()
-    #
-    #def __hash__(self):
-    #    return hash(self._order())
-
     def __repr__(self):
         result, _ = operators[self.op](self.a, self.b)
         return f"{self.a}{self.op}{self.b}={result}"
-        #return f"{self.a}{[self.i]}{self.op}{self.b}{[self.j]}"
 
 
 commutative = { op: op in ("+", "*") for op in operators }
@@ -85,11 +78,16 @@ def solve(target, numbers, curr_steps):
     for i in range(len(numbers)):
         for op in operators:
             for j in range(len(numbers)):
-                if i == j or ignore_commutative(numbers, op, i, j):
+                a, b = numbers[i], numbers[j]
+                if (
+                    i == j 
+                    or ignore_commutative(numbers, op, i, j) 
+                    or identity[op](a, b)
+                ):
                     continue
 
                 result, new_numbers = calc_step(target, numbers, i, j, op)
-                step = Operation(numbers[i], op, numbers[j])
+                step = Operation(a, op, b)
                 if not new_numbers:
                     continue
                 new_steps = curr_steps + (step,)
@@ -98,7 +96,6 @@ def solve(target, numbers, curr_steps):
                     print(f"Found solution: {new_steps}")
                     solutions.append(new_steps)
                     solutions_set.add(new_steps_set)
-                    #print(f"{solutions_set}")
                 elif len(new_numbers) >= 2:
                     solve(target, new_numbers, new_steps)
 
